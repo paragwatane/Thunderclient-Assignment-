@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Records</title>
+<style>
+  :root {
+    --bg: #eef1f5;
+    --card: #ffffff;
+    --ink: #1c2430;
+    --muted: #5d6b7c;
+    --line: #d9dfe7;
+    --accent: #2a5bd7;
+    --on-accent: #ffffff;
+    --danger: #c0392b;
+    --ok: #1e6b34;
+    --ok-bg: #e3f1e6;
+    --fail-bg: #f8e1de;
+    --row-hover: #f5f7fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161c;
+      --card: #1b212a;
+      --ink: #e7ebf0;
+      --muted: #97a3b3;
+      --line: #2c3541;
+      --accent: #6c93ff;
+      --on-accent: #0b1220;
+      --danger: #ff7b6b;
+      --ok: #7fd69a;
+      --ok-bg: #1d3326;
+      --fail-bg: #3a2220;
+      --row-hover: #212832;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  .app { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  h1 { margin: 0; font-size: 1.8rem; }
+  h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .status.online .dot { background: var(--ok); }
+  .status.offline .dot { background: var(--danger); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+
+  form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.9rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  input, button { font-family: inherit; }
+
+  input {
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--card);
+  }
+
+  input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .btn {
+    padding: 0.65rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .btn-primary { width: 100%; background: var(--accent); color: var(--on-accent); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+  .btn-ghost {
+    width: 100%;
+    margin-top: 0.5rem;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+
+  .form-error {
+    display: none;
+    margin-bottom: 0.9rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    background: var(--fail-bg);
+    color: var(--danger);
+    font-size: 0.88rem;
+  }
+  .form-error.show { display: block; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+  }
+  .stat-label { font-size: 0.82rem; color: var(--muted); }
+  .stat-value { font-size: 1.4rem; font-weight: 600; margin-top: 0.1rem; }
+
+  .list-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .list-head h2 { margin: 0; }
+  .list-head input { min-width: 200px; padding: 0.45rem 0.6rem; font-size: 0.92rem; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 0.65rem 0.6rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+  tbody tr:hover { background: var(--row-hover); }
+  .num { text-align: right; }
+  .actions { text-align: right; }
+
+  .grade {
+    display: inline-block;
+    min-width: 2.2rem;
+    text-align: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: var(--ok-bg);
+    color: var(--ok);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  .grade.fail { background: var(--fail-bg); color: var(--danger); }
+
+  .row-btn {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--ink);
+    margin-left: 0.3rem;
+  }
+  .row-btn:hover { background: var(--row-hover); }
+  .row-btn.delete { color: var(--danger); }
+
+  .empty { color: var(--muted); margin: 0; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    transform: translateX(-50%) translateY(20px);
+    padding: 0.7rem 1.1rem;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--bg);
+    font-size: 0.92rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>Student Records</h1>
+    <span id="status" class="status" role="status"><span class="dot"></span><span id="statusText">Connecting…</span></span>
+  </header>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><span class="stat-label">Students</span><span class="stat-value" id="statCount">0</span></div>
+    <div class="stat"><span class="stat-label">Average marks</span><span class="stat-value" id="statAvg">–</span></div>
+    <div class="stat"><span class="stat-label">Highest marks</span><span class="stat-value" id="statMax">–</span></div>
+    <div class="stat"><span class="stat-label">Lowest marks</span><span class="stat-value" id="statMin">–</span></div>
+  </section>
+
+  <div class="layout">
+    <form class="card" id="studentForm" novalidate>
+      <h2 id="formTitle">Add student</h2>
+      <div class="form-error" id="formError" role="alert"></div>
+
+      <label>Name
+        <input type="text" id="name" required placeholder="e.g. Parag Patil">
+      </label>
+      <label>Roll number
+        <input type="text" id="rollNo" required placeholder="e.g. CS2024-017">
+      </label>
+      <label>Department
+        <input type="text" id="department" required list="deptList" placeholder="e.g. Computer Science">
+        <datalist id="deptList">
+          <option value="Computer Science">
+          <option value="Information Technology">
+          <option value="Electronics">
+          <option value="Mechanical">
+          <option value="Civil">
+        </datalist>
+      </label>
+      <label>Marks (0–100)
+        <input type="number" id="marks" required min="0" max="100" step="any">
+      </label>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">Save student</button>
+      <button type="button" class="btn btn-ghost" id="cancelBtn" hidden>Cancel edit</button>
+    </form>
+
+    <section class="card">
+      <div class="list-head">
+        <h2>All students</h2>
+        <input type="search" id="search" placeholder="Search name, roll no, department" aria-label="Search students">
+      </div>
+      <div id="listArea"></div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  // Change this if your server runs on a different port
+  const API = "http://localhost:5000/api/students";
+
+  let students = [];
+  let editingId = null;
+
+  const $ = (id) => document.getElementById(id);
+  const form = $("studentForm");
+  const fields = { name: $("name"), rollNo: $("rollNo"), department: $("department"), marks: $("marks") };
+
+  // ---------- helpers ----------
+  async function request(url, options = {}) {
+    let res;
+    try {
+      res = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+    } catch {
+      setStatus(false);
+      throw new Error("Cannot reach the server. Is it running on port 5000?");
+    }
+    setStatus(true);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = data.errors ? data.errors.join(". ") : data.message;
+      throw new Error(detail || "Request failed");
+    }
+    return data;
+  }
+
+  function setStatus(online) {
+    $("status").className = "status " + (online ? "online" : "offline");
+    $("statusText").textContent = online ? "Connected to API" : "Server offline";
+  }
+
+  let toastTimer;
+  function toast(message) {
+    const el = $("toast");
+    el.textContent = message;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+
+  function showFormError(message) {
+    const el = $("formError");
+    el.textContent = message || "";
+    el.classList.toggle("show", Boolean(message));
+  }
+
+  function getGrade(marks) {
+    if (marks >= 90) return "A+";
+    if (marks >= 80) return "A";
+    if (marks >= 70) return "B";
+    if (marks >= 60) return "C";
+    if (marks >= 40) return "D";
+    return "F";
+  }
+
+  // ---------- rendering ----------
+  function renderStats() {
+    const n = students.length;
+    $("statCount").textContent = n;
+    if (n === 0) {
+      $("statAvg").textContent = $("statMax").textContent = $("statMin").textContent = "–";
+      return;
+    }
+    const marks = students.map((s) => s.marks);
+    $("statAvg").textContent = (marks.reduce((a, b) => a + b, 0) / n).toFixed(1);
+    $("statMax").textContent = Math.max(...marks);
+    $("statMin").textContent = Math.min(...marks);
+  }
+
+  function cell(text, className) {
+    const td = document.createElement("td");
+    td.textContent = text; // textContent keeps user data from being treated as HTML
+    if (className) td.className = className;
+    return td;
+  }
+
+  function renderList() {
+    const q = $("search").value.trim().toLowerCase();
+    const visible = students.filter((s) =>
+      [s.name, s.rollNo, s.department].some((v) => v.toLowerCase().includes(q))
+    );
+
+    const area = $("listArea");
+    area.replaceChildren();
+
+    if (visible.length === 0) {
+      const p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = students.length === 0
+        ? "No students yet. Add the first one with the form."
+        : "No students match your search.";
+      area.appendChild(p);
+      return;
+    }
+
+    const wrap = document.createElement("div");
+    wrap.className = "table-wrap";
+    const table = document.createElement("table");
+    table.innerHTML =
+      "<thead><tr><th>Roll no.</th><th>Name</th><th>Department</th>" +
+      '<th class="num">Marks</th><th>Grade</th><th></th></tr></thead>';
+    const tbody = document.createElement("tbody");
+
+    visible.forEach((s) => {
+      const tr = document.createElement("tr");
+      tr.append(cell(s.rollNo), cell(s.name), cell(s.department), cell(s.marks, "num"));
+
+      const gradeTd = document.createElement("td");
+      const badge = document.createElement("span");
+      badge.className = "grade" + (s.marks < 40 ? " fail" : "");
+      badge.textContent = getGrade(s.marks);
+      gradeTd.appendChild(badge);
+      tr.appendChild(gradeTd);
+
+      const actionTd = document.createElement("td");
+      actionTd.className = "actions";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "row-btn";
+      editBtn.textContent = "Edit";
+      editBtn.setAttribute("aria-label", "Edit " + s.name);
+      editBtn.addEventListener("click", () => startEdit(s));
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "row-btn delete";
+      delBtn.textContent = "Delete";
+      delBtn.setAttribute("aria-label", "Delete " + s.name);
+      delBtn.addEventListener("click", () => removeStudent(s));
+
+      actionTd.append(editBtn, delBtn);
+      tr.appendChild(actionTd);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    area.appendChild(wrap);
+  }
+
+  function render() {
+    renderStats();
+    renderList();
+  }
+
+  // ---------- CRUD ----------
+  async function loadStudents() {
+    try {
+      students = await request(API); // READ all
+      render();
+    } catch (err) {
+      $("listArea").replaceChildren();
+      const p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = err.message;
+      $("listArea").appendChild(p);
+    }
+  }
+
+  function resetForm() {
+    form.reset();
+    editingId = null;
+    $("formTitle").textContent = "Add student";
+    $("submitBtn").textContent = "Save student";
+    $("cancelBtn").hidden = true;
+    showFormError("");
+  }
+
+  function startEdit(student) {
+    editingId = student._id;
+    fields.name.value = student.name;
+    fields.rollNo.value = student.rollNo;
+    fields.department.value = student.department;
+    fields.marks.value = student.marks;
+    $("formTitle").textContent = "Edit student";
+    $("submitBtn").textContent = "Update student";
+    $("cancelBtn").hidden = false;
+    showFormError("");
+    fields.name.focus();
+  }
+
+  async function removeStudent(student) {
+    if (!confirm(`Delete ${student.name} (${student.rollNo})?`)) return;
+    try {
+      await request(`${API}/${student._id}`, { method: "DELETE" }); // DELETE
+      if (editingId === student._id) resetForm();
+      toast("Student deleted");
+      await loadStudents();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showFormError("");
+
+    if (!form.checkValidity()) {
+      form.reportValidity(); // browser shows which field is wrong
+      return;
+    }
+
+    const payload = {
+      name: fields.name.value.trim(),
+      rollNo: fields.rollNo.value.trim(),
+      department: fields.department.value.trim(),
+      marks: Number(fields.marks.value),
+    };
+
+    const btn = $("submitBtn");
+    btn.disabled = true;
+    try {
+      if (editingId) {
+        await request(`${API}/${editingId}`, { method: "PUT", body: JSON.stringify(payload) }); // UPDATE
+        toast("Student updated");
+      } else {
+        await request(API, { method: "POST", body: JSON.stringify(payload) }); // CREATE
+        toast("Student added");
+      }
+      resetForm();
+      await loadStudents();
+    } catch (err) {
+      showFormError(err.message); // e.g. duplicate roll number from the API
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("cancelBtn").addEventListener("click", resetForm);
+  $("search").addEventListener("input", renderList);
+
+  loadStudents();
+</script>
+</body>
+</html>
